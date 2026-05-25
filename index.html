@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Yuma - Menyu & Zakaz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            background-color: #050505; 
+            transition: background-color 0.5s ease;
+        }
+
+        body, .glass-card, button, div, span, p, h1, h2, a, i, input, select {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 400ms;
+        }
+
+        /* --- Светлая тема --- */
+        body.light-theme { background-color: #f8fafc; color: #1e293b; }
+        body.light-theme .glass-card { background: rgba(255, 255, 255, 0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.05), inset 0 0 0 1px rgba(0, 0, 0, 0.05); }
+        body.light-theme .bg-grid { background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px); }
+        body.light-theme .text-zinc-100, body.light-theme .text-zinc-200, body.light-theme .text-zinc-300, body.light-theme .restaurant-name { color: #0f172a !important; }
+        body.light-theme .text-zinc-400, body.light-theme .text-zinc-500 { color: #475569 !important; }
+        body.light-theme input, body.light-theme select { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+        body.light-theme .top-btn { background: #e2e8f0; color: #0f172a; border-color: #cbd5e1; }
+        body.light-theme .top-btn:hover { background: #cbd5e1; }
+
+        /* Карточки */
+        .glass-card {
+            background: rgba(30, 30, 35, 0.7);
+            border-radius: 1.25rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card::after {
+            content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 3.8px; 
+            background: radial-gradient(400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), #ef4444 0%, #f97316 40%, #eab308 70%, transparent 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+            opacity: 0; transition: opacity 0.4s ease; pointer-events: none; z-index: 10;
+        }
+        .glass-card:hover::after { opacity: 1; }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 40%, transparent 90%);
+        }
+
+        /* Выбор количества */
+        .qty-picker {
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            border-radius: 0.75rem; overflow: hidden; font-weight: bold; color: white;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+        }
+        .qty-picker button { padding: 10px 18px; background: transparent; border: none; cursor: pointer; transition: background 0.2s; font-size: 1.1rem; }
+        .qty-picker button:hover { background: rgba(0,0,0,0.2); }
+        .qty-picker button:active { background: rgba(0,0,0,0.3); transform: scale(0.95); }
+
+        /* Плавающая корзина */
+        .floating-cart {
+            position: fixed; bottom: 24px; right: 24px;
+            background: linear-gradient(135deg, #f97316, #ef4444); color: white;
+            border-radius: 50px; padding: 14px 28px; box-shadow: 0 10px 30px -5px rgba(239, 68, 68, 0.6);
+            display: none; cursor: pointer; z-index: 999; font-weight: bold; transform-origin: center;
+        }
+        .floating-cart:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 35px -5px rgba(239, 68, 68, 0.7); }
+        .floating-cart:active { transform: translateY(0) scale(0.98); }
+
+        /* Табы (Категории) */
+        .category-tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { background: #27272a; color: #d4d4d8; border: 1px solid #3f3f46; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .tab-btn:hover { background: #3f3f46; color: white; transform: translateY(-2px); }
+        .tab-btn.active { background: linear-gradient(135deg, #f97316, #ef4444); color: white; border-color: transparent; box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4); transform: translateY(-2px); }
+        
+        body.light-theme .tab-btn { background: #f1f5f9; color: #475569; border-color: #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        body.light-theme .tab-btn:hover { background: #e2e8f0; color: #0f172a; }
+        body.light-theme .tab-btn.active { background: linear-gradient(135deg, #f97316, #ef4444); color: white; }
+
+        /* Бейджи статусов */
+        .badge { padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: bold; color: #000; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-pending { background-color: #f97316; color: #fff; }
+        .status-accepted { background-color: #a3e635; }
+        .status-in_progress { background-color: #38bdf8; color: #fff; }
+        .status-ready_delivery { background-color: #22c55e; color: #fff; }
+        .status-completed { background-color: #94a3b8; }
+        .status-rejected { background-color: #ef4444; color: #fff; }
+        
+        /* Кнопки соцсетей и заказов */
+        .top-btn { background: #3f3f46; color: white; border: 1px solid #52525b; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .top-btn:hover { background: #52525b; border-color: #71717a; transform: translateY(-2px); }
+        .top-btn:active { transform: translateY(0) scale(0.95); }
+
+        /* Увеличение соцсетей при наведении */
+        .social-btn { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .social-btn:hover { transform: translateY(-5px) scale(1.2) !important; }
+        
+        /* Картинки и эффекты */
+        .img-wrapper { overflow: hidden; border-radius: 0.75rem; }
+        .img-wrapper img { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .group:hover .img-wrapper img { transform: scale(1.1); }
+        .menu-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(249, 115, 22, 0.3); z-index: 20; }
+
+        /* Логотип контраст */
+        .logo-glow {
+            background: rgba(0,0,0,0.4);
+            box-shadow: 0 0 20px rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        body.light-theme .logo-glow {
+            background: rgba(255,255,255,0.7);
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .logo-glow img { filter: drop-shadow(0px 3px 6px rgba(249, 115, 22, 0.6)) brightness(1.1); transition: filter 0.5s; }
+        
+        /* Делаем логотип темным в светлой теме */
+        body.light-theme .logo-glow img { filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2)) brightness(0.1) !important; }
+
+        /* Свитчер темы */
+        .theme-switch {
+            background: rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        }
+        body.light-theme .theme-switch {
+            background: rgba(0,0,0,0.05);
+            border-color: rgba(0,0,0,0.1);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .theme-slider {
+            transform: translateX(0);
+            background: #52525b;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        }
+        body.light-theme .theme-slider {
+            transform: translateX(28px);
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="text-zinc-300 min-h-screen relative z-0 pb-10">
+    <div class="fixed inset-0 z-[-1] pointer-events-none">
+        <div class="absolute inset-0 bg-grid"></div>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4 pt-6">
+        <header class="glass-card p-4 flex justify-between items-center mb-6 border-b border-white/5 flex-wrap gap-4">
+            
+            <div class="logo-glow p-2 rounded-2xl transition-all duration-500">
+                <img src="https://yumafergana.uz/images/yuma-logo.png" alt="Yuma Logo">
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div id="themeToggleBtn" class="theme-switch flex items-center rounded-full p-1 cursor-pointer w-[60px] h-[32px] relative transition-all overflow-hidden shrink-0">
+                    <div class="theme-slider absolute left-[2px] w-[26px] h-[26px] rounded-full transition-transform duration-300"></div>
+                    <div class="w-1/2 flex justify-center z-10 text-blue-300 text-xs drop-shadow-md pointer-events-none"><i class="fa-solid fa-moon"></i></div>
+                    <div class="w-1/2 flex justify-center z-10 text-yellow-400 text-xs drop-shadow-md pointer-events-none"><i class="fa-solid fa-sun"></i></div>
+                </div>
+
+                <button class="top-btn px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition" id="openOrdersBtn">
+                    <i class="fa-solid fa-clock-rotate-left text-orange-400 text-sm sm:text-base"></i> <span class="loc" data-key="my_orders">Buyurtmalarim</span>
+                </button>
+                
+                <select id="languageSelect" class="bg-zinc-800 text-zinc-100 text-sm px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-zinc-600 outline-none font-bold cursor-pointer hover:bg-zinc-700 transition">
+                    <option value="uz">UZ</option>
+                    <option value="ru">RU</option>
+                    <option value="en">EN</option>
+                </select>
+            </div>
+        </header>
+
+        <div class="glass-card p-7 mb-8 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-5">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight restaurant-name drop-shadow-md">Yuma Restaurant</h1>
+                <div class="text-zinc-300 font-medium text-sm mt-3 flex items-center gap-2 justify-center sm:justify-start">
+                    <i class="fa-solid fa-location-dot text-red-500 text-lg"></i>
+                    <span class="loc" data-key="address">Farg‘ona shahar, Burxoniddin Marg‘iloniy ko‘chasi, 60</span>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <a href="https://www.instagram.com/yumauzbekistan" target="_blank" class="social-btn w-12 h-12 rounded-xl top-btn flex items-center justify-center text-xl">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+                <a href="https://t.me/yuma_motalka" target="_blank" class="social-btn w-12 h-12 rounded-xl top-btn flex items-center justify-center text-xl">
+                    <i class="fa-brands fa-telegram"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="category-tabs flex overflow-x-auto gap-3 mb-8 pb-3 px-1" id="categoryTabsContainer"></div>
+        <div class="mb-8 relative group">
+            <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-orange-500 transition"></i>
+            <input type="text" id="searchInput" class="w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-zinc-100 placeholder-zinc-500 outline-none focus:border-orange-500/80 focus:bg-black/60 shadow-inner text-lg transition-all loc-placeholder" data-key="search_placeholder" placeholder="Qidiruv...">
+        </div>
+
+        <main class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6" id="menuContainer"></main>
+    </div>
+
+    <div class="floating-cart flex items-center gap-4" id="floatingCart">
+        <i class="fa-solid fa-basket-shopping text-2xl drop-shadow-md"></i>
+        <div class="flex flex-col">
+            <span class="text-xs opacity-90 font-medium"><span id="cartCount">0</span> <span class="loc" data-key="items">taom</span></span>
+            <span class="text-lg"><span id="cartTotal">0</span> <span class="loc text-sm font-medium" data-key="currency">so'm</span></span>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 transition-opacity" id="cartModal">
+        <div class="glass-card bg-zinc-900 border border-white/10 w-full max-w-md p-7 max-h-[90vh] overflow-y-auto relative shadow-2xl">
+            <i class="fa-solid fa-xmark absolute top-6 right-6 text-zinc-400 hover:text-white text-2xl cursor-pointer transition hover:rotate-90" id="closeCartBtn"></i>
+            <h2 class="text-2xl font-black text-white mb-6 flex items-center gap-3 border-b border-white/10 pb-4"><i class="fa-solid fa-cart-shopping text-orange-500"></i> <span class="loc" data-key="cart_title">Korzina</span></h2>
+            
+            <div id="cartItemsContainer" class="space-y-3 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar"></div>
+            
+            <div class="border-t border-white/10 mt-5 pt-5 flex justify-between items-end text-xl font-black text-white mb-6 bg-black/20 p-4 rounded-xl">
+                <span class="loc text-zinc-300 text-lg" data-key="total">Jami:</span>
+                <div class="text-orange-400"><span id="cartFinalTotal">0</span> <span class="loc text-sm font-medium text-zinc-400" data-key="currency">so'm</span></div>
+            </div>
+
+            <form id="checkoutForm" class="space-y-4">
+                <input type="text" id="clientName" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3.5 text-zinc-100 outline-none focus:border-orange-500 transition loc-placeholder" data-key="ph_name" placeholder="Ismingiz" required>
+                <input type="tel" id="clientPhone" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3.5 text-zinc-100 outline-none focus:border-orange-500 transition" placeholder="+998" required>
+                <select id="deliveryType" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3.5 text-zinc-100 outline-none focus:border-orange-500 transition font-bold cursor-pointer">
+                    <option value="pickup" class="loc" data-key="pickup">Olib ketish</option>
+                    <option value="delivery" class="loc" data-key="delivery">Yetkazib berish (+10 000 so'm)</option>
+                </select>
+                <input type="text" id="clientAddress" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3.5 text-zinc-100 outline-none focus:border-orange-500 transition loc-placeholder hidden" data-key="ph_address" placeholder="Manzil">
+                <button type="submit" class="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold text-lg py-4 rounded-xl transition-all shadow-[0_10px_20px_-10px_rgba(249,115,22,0.8)] hover:-translate-y-1 active:scale-95 loc mt-2" data-key="checkout_btn">Buyurtma berish</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 transition-opacity" id="ordersModal">
+        <div class="glass-card bg-zinc-900 border border-white/10 w-full max-w-xl p-7 max-h-[90vh] overflow-y-auto relative shadow-2xl">
+            <i class="fa-solid fa-xmark absolute top-6 right-6 text-zinc-400 hover:text-white text-2xl cursor-pointer transition hover:rotate-90" id="closeOrdersBtn"></i>
+            <h2 class="text-2xl font-black text-white mb-6 flex items-center gap-3 border-b border-white/10 pb-4"><i class="fa-solid fa-clock-rotate-left text-orange-500"></i> <span class="loc" data-key="my_orders">Mening buyurtmalarim</span></h2>
+            <div id="ordersContainer" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBR3rLYp-cpq9nYsDKwwdbTziLr1w0qxn8",
+            authDomain: "jwiidid.firebaseapp.com",
+            databaseURL: "https://jwiidid-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "jwiidid",
+            storageBucket: "jwiidid.firebasestorage.app",
+            messagingSenderId: "163956366428",
+            appId: "1:163956366428:web:d209e93e59eeada258da99"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- Управление Темой ---
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light' || (!savedTheme && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+                document.body.classList.add('light-theme');
+            }
+        }
+        initTheme();
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        });
+
+        // --- Переводы UI ---
+        const uiLocales = {
+            uz: {
+                my_orders: "Buyurtmalarim", address: "Farg‘ona shahar, Burxoniddin Marg‘iloniy ko‘chasi, 60", search_placeholder: "Qidiruv...", items: "taom", currency: "so'm", cart_title: "Korzina", total: "Jami:", ph_name: "Ismingiz", ph_address: "Manzil", pickup: "Olib ketish", delivery: "Yetkazib berish (+10 000)", checkout_btn: "Buyurtma berish", add_to_cart: "Savatchaga qo'shish", all_dishes: "Barcha taomlar", status_pending: "Kutilmoqda", status_accepted: "Qabul qilindi", status_in_progress: "Tayyorlanmoqda", status_ready_delivery: "Yo'lda / Tayyor", status_completed: "Yakunlandi", status_rejected: "Rad etildi", wait_5m: "Iltimos, keyingi buyurtma uchun biroz kuting.", success: "Muvaffaqiyatli yuborildi!", error: "Xatolik yuz berdi.", empty_orders: "Sizda hali buyurtmalar yo'q."
+            },
+            ru: {
+                my_orders: "Мои заказы", address: "г. Фергана, ул. Б. Маргилани, 60", search_placeholder: "Поиск...", items: "шт.", currency: "сум", cart_title: "Корзина", total: "Итого:", ph_name: "Ваше имя", ph_address: "Адрес доставки", pickup: "Самовывоз", delivery: "Доставка (+10 000)", checkout_btn: "Оформить заказ", add_to_cart: "В корзину", all_dishes: "Все блюда", status_pending: "Ожидает", status_accepted: "Принят", status_in_progress: "Готовится", status_ready_delivery: "В пути / Готов", status_completed: "Завершен", status_rejected: "Отменен", wait_5m: "Подождите перед следующим заказом.", success: "Заказ успешно отправлен!", error: "Ошибка при отправке.", empty_orders: "У вас пока нет заказов."
+            },
+            en: {
+                my_orders: "My Orders", address: "Fergana city, B. Margilaniy str., 60", search_placeholder: "Search...", items: "items", currency: "uzs", cart_title: "Cart", total: "Total:", ph_name: "Your Name", ph_address: "Delivery Address", pickup: "Pickup", delivery: "Delivery (+10 000)", checkout_btn: "Checkout", add_to_cart: "Add to cart", all_dishes: "All Dishes", status_pending: "Pending", status_accepted: "Accepted", status_in_progress: "Preparing", status_ready_delivery: "On the way", status_completed: "Completed", status_rejected: "Rejected", wait_5m: "Please wait before ordering again.", success: "Order placed!", error: "An error occurred.", empty_orders: "No orders found."
+            }
+        };
+
+        // --- Переводы Категорий ---
+        const cats_map = {
+            "cat5": { uz: "Kofe va Choy", ru: "Кофе и Чай", en: "Coffee & Tea" },
+            "cat14": { uz: "Choy", ru: "Чай", en: "Tea" },
+            "cat13": { uz: "Kofe", ru: "Кофе", en: "Coffee" },
+            "cat15": { uz: "Kokteyl", ru: "Коктейли", en: "Cocktails" },
+            "cat16": { uz: "Birinchi taom", ru: "Первые блюда", en: "First Courses" },
+            "cat7": { uz: "Sho'rvalar", ru: "Супы", en: "Soups" },
+            "cat11": { uz: "Fast-food", ru: "Фаст-фуд", en: "Fast Food" },
+            "cat9": { uz: "Qo'shimcha taom", ru: "Гарниры", en: "Side Dishes" },
+            "cat8": { uz: "Kombo", ru: "Комбо", en: "Combo" },
+            "cat6": { uz: "Go'shtli taomlar", ru: "Мясные блюда", en: "Meat Dishes" },
+            "cat10": { uz: "Pitsalar", ru: "Пиццы", en: "Pizzas" },
+            "cat12": { uz: "Vaflilar", ru: "Вафли", en: "Waffles" },
+            "cat17": { uz: "Desert", ru: "Десерты", en: "Desserts" },
+            "cat18": { uz: "Muzqaymoq", ru: "Мороженое", en: "Ice Cream" }
+        };
+
+        // --- Переводы Блюд ---
+        const raw_dishes = [
+            ["cat5",5000,"dish_1765363940_6751.jpg","Qora kofe","Черный кофе","Black coffee"],
+            ["cat5",5000,"dish_1765364058_2880.jpg","Sutli kofe","Кофе с молоком","Coffee with milk"],
+            ["cat5",5000,"dish_1765707556_6510.jpeg","Choy oddiy","Обычный чай","Black/Green tea"],
+            ["cat5",7000,"dish_1765707613_1914.jpeg","Choy limonli","Чай с лимоном","Lemon tea"],
+            ["cat5",10000,"dish_1765707631_5529.jpeg","Choy limon, novvot","Чай с лимоном и наватом","Tea with lemon & navat"],
+            ["cat5",9000,"dish_1765364335_2939.jpg","Cola razliv","Кола на розлив","Draft Cola"],
+            ["cat5",17000,"dish_1765364387_6141.jpg","Cola 1.5L","Кола 1.5Л","Cola 1.5L"],
+            ["cat5",9000,"dish_1765364429_4703.jpg","Fanta 0.5L","Фанта 0.5Л","Fanta 0.5L"],
+            ["cat5",16000,"dish_1765364476_9021.jpg","Sok","Сок","Juice"],
+            ["cat5",4000,"dish_1765364551_4444.jpg","Family 0.5L","Family 0.5Л","Family 0.5L"],
+            ["cat14",25000,"dish_1765364789_4720.jpg","Malina choy","Малиновый чай","Raspberry tea"],
+            ["cat14",25000,"dish_1765364881_2236.jpg","Imbir choy","Имбирный чай","Ginger tea"],
+            ["cat14",25000,"dish_1765381712_8228.jpeg","Marokash choy","Марокканский чай","Moroccan tea"],
+            ["cat14",25000,"dish_1765382113_1673.jpeg","Yovvoyi gilosli choy","Чай с дикой вишней","Wild cherry tea"],
+            ["cat14",28000,"dish_1765382174_3637.jpeg","Oblepixa choyi","Облепиховый чай","Sea buckthorn tea"],
+            ["cat14",27000,"dish_1765382441_6479.jpeg","Sitrusli choy","Цитрусовый чай","Citrus tea"],
+            ["cat13",19000,"dish_1765382700_2213.jpeg","Kapuchino","Капучино","Cappuccino"],
+            ["cat13",18000,"dish_1765382784_7610.jpeg","Amerikano","Американо","Americano"],
+            ["cat13",14000,"dish_1765382900_4588.jpeg","Espresso","Эспрессо","Espresso"],
+            ["cat13",23000,"dish_1765382986_9651.jpeg","Latte","Латте","Latte"],
+            ["cat13",23000,"dish_1765383183_6079.jpeg","Flat White","Флэт Уайт","Flat White"],
+            ["cat13",24000,"dish_1765383249_2225.jpeg","Mokachino","Мокачино","Mochaccino"],
+            ["cat13",20000,"dish_1765647372_2629.jpeg","Muzli latte","Айс латте","Iced Latte"],
+            ["cat13",18000,"dish_1765647451_9058.jpeg","Muzli americano","Айс американо","Iced Americano"],
+            ["cat15",21000,"dish_1765647830_7608.jpeg","Mojito classic 0.5","Мохито классик 0.5","Classic Mojito 0.5"],
+            ["cat15",31000,"dish_1765647927_3804.jpeg","Mojito classic 1 L","Мохито классик 1Л","Classic Mojito 1L"],
+            ["cat15",23000,"dish_1765648141_4249.jpeg","Mojito qulupnayli 0,5","Клубничный мохито 0.5","Strawberry Mojito 0.5"],
+            ["cat15",32000,"dish_1765648244_3474.jpeg","Mojito qulupnayli 1L","Клубничный мохито 1Л","Strawberry Mojito 1L"],
+            ["cat15",24000,"dish_1765648992_8972.jpeg","Bablchoy: qulupnay, sutli","Бабл-ти: клубника, молоко","Bubble tea: strawberry, milk"],
+            ["cat15",24000,"dish_1765649820_9849.jpeg","Bablchoy: sitrus, meva","Бабл-ти: цитрус, фрукты","Bubble tea: citrus, fruit"],
+            ["cat15",22000,"dish_1765708876_2457.jpeg","Ice tea: apelsinli, malinali","Айс-ти: апельсин, малина","Ice tea: orange, raspberry"],
+            ["cat16",23000,"dish_1765384228_8925.png","Tuxum va kolbasa","Яичница с колбасой","Eggs and sausage"],
+            ["cat16",23000,"dish_1765393690_1646.jpg","Qirollik lazzati","Королевское наслаждение","Royal delight"],
+            ["cat16",20000,"dish_1765644886_8081.jpeg","Blinchiklar","Блинчики","Pancakes"],
+            ["cat16",23000,"dish_1765644909_2431.jpeg","Kolbasali omlet","Омлет с колбасой","Omelette with sausage"],
+            ["cat16",15000,"dish_1765384865_4858.jpeg","Non assortisi","Ассорти хлеба","Bread basket"],
+            ["cat16",35000,"dish_1765644954_7116.jpeg","Turkcha taom","Турецкое блюдо","Turkish dish"],
+            ["cat16",23000,"dish_1765385987_5382.jpeg","Sutli jo‘xori nonushtasi","Кукурузная каша на молоке","Milk corn porridge"],
+            ["cat16",22000,"dish_1765386159_9486.jpeg","Sutli manna nonushtasi","Манная каша на молоке","Milk semolina porridge"],
+            ["cat16",25000,"dish_1765386245_1949.jpeg","Okroshka taomi","Окрошка","Okroshka"],
+            ["cat16",25000,"dish_1765386336_8420.jpeg","Gaspacho taomi","Гаспачо","Gazpacho"],
+            ["cat16",23000,"dish_1765386411_2065.jpeg","Sutli guruch taomi","Рисовая каша на молоке","Milk rice porridge"],
+            ["cat16",35000,"dish_1765644987_6949.jpeg","Rukola salati (mol go’shti)","Салат с рукколой (говядина)","Arugula salad (beef)"],
+            ["cat16",35000,"dish_1765393096_3972.jpg","Qovurilgan baklajan","Жареные баклажаны","Fried eggplants"],
+            ["cat16",35000,"dish_1765387075_4632.jpeg","Italiancha baklajan taomi","Баклажаны по-итальянски","Italian eggplants"],
+            ["cat16",35000,"dish_1765645073_8190.jpeg","Kobb salati","Кобб салат","Cobb salad"],
+            ["cat16",25000,"dish_1765394104_2020.jpg","Mini mozzarella","Мини моцарелла","Mini mozzarella"],
+            ["cat16",28000,"dish_1765387545_6398.jpeg","Smak","Смак","Smak salad"],
+            ["cat16",34000,"dish_1765394218_1940.jpg","Bavariya salati","Баварский салат","Bavarian salad"],
+            ["cat16",33000,"dish_1765394456_7841.webp","Sezar salati(tovuqli)","Цезарь (с курицей)","Caesar salad (chicken)"],
+            ["cat16",36000,"dish_1765394606_7510.jpeg","Yaponskie","Японский салат","Japanese salad"],
+            ["cat16",36000,"dish_1765394817_3219.jpg","Nezhnost","Нежность","Tenderness salad"],
+            ["cat16",28000,"dish_1765394873_9480.jpg","Tay salati","Тайский салат","Thai salad"],
+            ["cat16",35000,"dish_1765388713_9012.jpeg","Issiq til salati","Теплый салат с языком","Warm tongue salad"],
+            ["cat16",30000,"dish_1765388870_4558.jpeg","Lambik","Ламбик","Lambic salad"],
+            ["cat16",22000,"dish_1765396277_3401.jpg","Grek salati","Греческий салат","Greek salad"],
+            ["cat16",25000,"dish_1765396337_1521.jpg","Fransuz salati","Французский салат","French salad"],
+            ["cat16",25000,"dish_1765397358_6368.jpg","Norin(170gram)","Нарын (170гр)","Naryn (170g)"],
+            ["cat16",36000,"dish_1765396504_9529.jpg","Qarsildoq baqlajon salati","Салат Хрустящие баклажаны","Crispy eggplant salad"],
+            ["cat16",13000,"dish_1765396642_2804.webp","Shakarop","Шакароп","Shakarop"],
+            ["cat16",40000,"dish_1765397384_6974.jpg","Ruletka baqlajon","Рулетики из баклажанов","Eggplant rolls"],
+            ["cat16",20000,"dish_1765397401_1376.jpg","Gruzinskie salat","Грузинский салат","Georgian salad"],
+            ["cat16",31000,"dish_1765397128_3623.jpg","Olivia mol go'shtidan","Оливье с говядиной","Olivier with beef"],
+            ["cat16",32000,"dish_1765397230_1291.jpg","Mujskoy kapriz","Мужской каприз","Male whim salad"],
+            ["cat16",29000,"dish_1765397281_7439.jpg","Olivia tovuq go'shtidan","Оливье с курицей","Olivier with chicken"],
+            ["cat16",13000,"dish_1765397307_6830.png","Suzma","Сузьма","Suzma"],
+            ["cat7",29000,"dish_1765397870_3165.jpg","Solyanka","Солянка","Solyanka"],
+            ["cat7",26000,"dish_1765397921_9405.jpg","Tovuqdan lapsha","Куриная лапша","Chicken noodle soup"],
+            ["cat7",25000,"dish_1765397996_6054.jpg","Chechevichniy sho'rva","Чечевичный суп","Lentil soup"],
+            ["cat7",30000,"dish_1765398050_6804.jpg","Sirli sho'rva","Сырный суп","Cheese soup"],
+            ["cat7",27000,"dish_1765398141_3135.jpg","Frikadelka sho'rva","Суп с фрикадельками","Meatball soup"],
+            ["cat7",32000,"dish_1765398201_6436.jpg","Chuchvara","Чучвара","Chuchvara (Dumpling soup)"],
+            ["cat7",29000,"dish_1765398253_7456.jpg","Borsh","Борщ","Borscht"],
+            ["cat11",24000,"dish_1765607404_4602.jpeg","Lavash mini(mol)","Мини лаваш (говядина)","Mini lavash (beef)"],
+            ["cat11",28000,"dish_1765607440_2197.jpeg","Lavash mini sirli(mol)","Мини сырный лаваш (говядина)","Mini cheese lavash (beef)"],
+            ["cat11",30000,"dish_1765607458_5140.jpeg","Lavash(mol go'shti)","Лаваш (говядина)","Lavash (beef)"],
+            ["cat11",33000,"dish_1765607476_4921.jpeg","Lavash sirli(mol)","Сырный лаваш (говядина)","Cheese lavash (beef)"],
+            ["cat11",23000,"dish_1765607574_7333.jpeg","Lavash mini(tovuq)","Мини лаваш (курица)","Mini lavash (chicken)"],
+            ["cat11",24000,"dish_1765607591_6892.jpeg","Lavash mini sirli(tovuq)","Мини сырный лаваш (курица)","Mini cheese lavash (chicken)"],
+            ["cat11",25000,"dish_1765607604_5242.jpeg","Lavash(tovuq)","Лаваш (курица)","Lavash (chicken)"],
+            ["cat11",27000,"dish_1765607621_8846.jpeg","Lavash sirli(tovuq)","Сырный лаваш (курица)","Cheese lavash (chicken)"],
+            ["cat11",31000,"dish_1765607751_5473.jpeg","Shaurma 0.5(mol)","Шаурма 0.5 (говядина)","Shawarma 0.5 (beef)"],
+            ["cat11",26000,"dish_1765607828_8185.jpeg","Shaurma 0.5(tovuq)","Шаурма 0.5 (курица)","Shawarma 0.5 (chicken)"],
+            ["cat11",25000,"dish_1765608165_9194.png","Shaurma 3/1(mol)","Шаурма 3/1 (говядина)","Shawarma 3/1 (beef)"],
+            ["cat11",23000,"dish_1765608200_1836.png","Shaurma 3/1(tovuq)","Шаурма 3/1 (курица)","Shawarma 3/1 (chicken)"],
+            ["cat11",35000,"dish_1765608152_5465.jpeg","Non kabob 0.5","Нон кабоб 0.5","Bread kebab 0.5"],
+            ["cat11",28000,"dish_1765608049_1678.jpeg","Non kabob 3/1","Нон кабоб 3/1","Bread kebab 3/1"],
+            ["cat11",25000,"dish_1765640894_4217.jpeg","Donar bulochka(mol)","Донар в булочке (говядина)","Doner bun (beef)"],
+            ["cat11",22000,"dish_1765640917_3724.jpeg","Donar bulochka(tovuq)","Донар в булочке (курица)","Doner bun (chicken)"],
+            ["cat11",37000,"dish_1765468153_3667.jpg","Durum","Дюрюм","Durum"],
+            ["cat11",16000,"dish_1765643045_3486.png","Xotdog sosiskali","Хот-дог с сосиской","Hot dog with sausage"],
+            ["cat11",18000,"dish_1765643096_7567.png","Xotdog kolbasali","Хот-дог с колбасой","Hot dog with salami"],
+            ["cat11",19000,"dish_1765643121_6728.png","Xotdog sosiskali 2x","Двойной хот-дог с сосиской","Double sausage hot dog"],
+            ["cat11",23000,"dish_1765643155_3073.png","Xotdog kolbasali 2x","Двойной хот-дог с колбасой","Double salami hot dog"],
+            ["cat11",22000,"dish_1765643172_7669.png","Xotdog sosiskali sirli 2x","Двойной сырный хот-дог","Double cheese hot dog"],
+            ["cat11",21000,"dish_1765643195_6765.png","Non kolbasali","Хлеб с колбасой","Bread with salami"],
+            ["cat11",27000,"dish_1765643219_3685.png","Gamburger","Гамбургер","Hamburger"],
+            ["cat11",30000,"dish_1765643289_9522.png","Chizburger","Чизбургер","Cheeseburger"],
+            ["cat11",25000,"dish_1765643314_2337.png","Bigmak","Бигмак","Big Mac"],
+            ["cat11",40000,"dish_1765643335_4453.png","Double chiz","Дабл чизбургер","Double cheeseburger"],
+            ["cat11",24000,"dish_1765643362_8936.png","Chicken burger","Чикенбургер","Chicken burger"],
+            ["cat11",24000,"dish_1765643388_3040.png","Longer","Лонгер","Longer"],
+            ["cat11",23000,"dish_1765643587_1119.png","Koroleveskie","Королевский бургер","Royal burger"],
+            ["cat11",33000,"dish_1765473970_7198.jpg","Tovuq qanotlari","Куриные крылышки","Chicken wings"],
+            ["cat11",37000,"dish_1765473970_7198.jpg","Naggets","Наггетсы","Nuggets"],
+            ["cat11",37000,"dish_1765474087_8107.jpg","Strips","Стрипсы","Strips"],
+            ["cat11",38000,"dish_1765474357_6237.jpg","Klab sendvich tovuq","Клаб сэндвич (курица)","Club sandwich (chicken)"],
+            ["cat11",41000,"dish_1765474408_1920.jpg","Klab sendvich(mol)","Клаб сэндвич (говядина)","Club sandwich (beef)"],
+            ["cat11",110000,"dish_1765474488_8851.jpg","Tovuq go'sht assorti","Ассорти из курицы","Chicken platter"],
+            ["cat9",10000,"dish_1765475029_7686.jpg","Guruch","Рис","Rice"],
+            ["cat9",7000,"dish_1765644471_3093.png","Kolbasa (1 dona)","Колбаса (1 шт)","Salami (1 pc)"],
+            ["cat9",13000,"dish_1765644531_3445.png","Kotlet (1 dona)","Котлета (1 шт)","Cutlet (1 pc)"],
+            ["cat9",6000,"dish_1765475094_8710.jpg","Sosiska (1 dona)","Сосиска (1 шт)","Sausage (1 pc)"],
+            ["cat9",16000,"dish_1765644803_8333.jpg","Kartoshka derevenskie","Картофель по-деревенски","Potato wedges"],
+            ["cat9",15000,"dish_1765475191_5427.jpg","Kartoshka fri","Картофель фри","French fries"],
+            ["cat9",30000,"dish_1765475238_3647.jpg","Kulcha (1 dona)","Лепешка (1 шт)","Flatbread (1 pc)"],
+            ["cat8",27000,"dish_1765642506_6167.jpeg","Student","Студенческий комбо","Student combo"],
+            ["cat8",43000,"dish_1765642536_3028.jpeg","Naggets mix","Микс наггетсов","Nuggets mix"],
+            ["cat8",38000,"dish_1765642590_8508.jpeg","Kombo shaurma","Комбо шаурма","Shawarma combo"],
+            ["cat8",47000,"dish_1765474746_3916.jpg","Miks","Микс","Mix"],
+            ["cat8",24000,"dish_1765642672_6009.jpeg","Jajji kombo","Детский комбо","Kids combo"],
+            ["cat6",53000,"dish_1765643481_4784.jpeg","Donar v tarelke","Донар на тарелке","Doner on a plate"],
+            ["cat6",51000,"dish_1765643511_5578.jpeg","Mini kotletlar","Мини котлеты","Mini cutlets"],
+            ["cat6",50000,"dish_1765643569_1051.jpeg","Tovuq naggets","Куриные наггетсы","Chicken nuggets"],
+            ["cat6",49000,"dish_1765643635_7168.jpeg","Tovuq palochkalari","Куриные палочки","Chicken sticks"],
+            ["cat6",49000,"dish_1765643192_8117.jpeg","Tovuq filelari","Куриное филе","Chicken fillet"],
+            ["cat6",66000,"dish_1765475808_6957.jpg","Steyk burger","Стейк бургер","Steak burger"],
+            ["cat6",168000,"dish_1765475862_2250.jpg","Go'shtli assorti (3kishili)","Мясное ассорти (на 3х)","Meat platter (for 3)"],
+            ["cat6",238000,"dish_1765475906_3233.jpg","Go'shtli assorti (5kishili)","Мясное ассорти (на 5х)","Meat platter (for 5)"],
+            ["cat6",32000,"dish_1765475925_6051.jpg","Pita","Пита","Pita"],
+            ["cat6",10000,"dish_1765475958_9441.jpg","Olot somsa","Алатская самса","Alat samsa"],
+            ["cat10",53000,"dish_1765398624_3313.jpeg","Pepperoni (M)","Пепперони (M)","Pepperoni (M)"],
+            ["cat10",65000,"dish_1765398761_3958.jpeg","Pepperoni (L)","Пепперони (L)","Pepperoni (L)"],
+            ["cat10",77000,"dish_1765398859_8436.jpeg","Pepperoni (XL)","Пепперони (XL)","Pepperoni (XL)"],
+            ["cat10",44000,"dish_1765398968_9055.jpeg","Qoziqorinli (M)","Грибная (M)","Mushroom (M)"],
+            ["cat10",51000,"dish_1765464627_5805.jpeg","Qoziqorinli (L)","Грибная (L)","Mushroom (L)"],
+            ["cat10",58000,"dish_1765464754_2604.jpeg","Qoziqorinli (XL)","Грибная (XL)","Mushroom (XL)"],
+            ["cat10",52000,"dish_1765465068_8899.jpeg","Assorti (M)","Ассорти (M)","Assorted (M)"],
+            ["cat10",66000,"dish_1765465147_2797.jpeg","Assorti (L)","Ассорти (L)","Assorted (L)"],
+            ["cat10",77000,"dish_1765465225_7101.jpeg","Assorti (XL)","Ассорти (XL)","Assorted (XL)"],
+            ["cat10",47000,"dish_1765465481_4315.jpeg","Ovchilarcha pitsa (M)","Охотничья (M)","Hunter's (M)"],
+            ["cat10",63000,"dish_1765465543_5705.jpeg","Ovchilarcha pitsa (L)","Охотничья (L)","Hunter's (L)"],
+            ["cat10",75000,"dish_1765465618_8909.jpeg","Ovchilarcha pitsa (XL)","Охотничья (XL)","Hunter's (XL)"],
+            ["cat10",37000,"dish_1765466912_4968.jpeg","Margarita (M)","Маргарита (M)","Margherita (M)"],
+            ["cat10",44000,"dish_1765467017_8114.jpeg","Margarita (L)","Маргарита (L)","Margherita (L)"],
+            ["cat10",51000,"dish_1765467399_9636.jpeg","Margarita (XL)","Маргарита (XL)","Margherita (XL)"],
+            ["cat10",63000,"dish_1765467898_9159.jpeg","Qazili (M)","С казы (M)","With Kazy (M)"],
+            ["cat10",75000,"dish_1765468013_9908.jpeg","Qazili (L)","С казы (L)","With Kazy (L)"],
+            ["cat10",87000,"dish_1765468132_3178.jpeg","Qazili (XL)","С казы (XL)","With Kazy (XL)"],
+            ["cat10",57000,"dish_1765468567_9251.jpeg","Go’shtli (M)","Мясная (M)","Meat (M)"],
+            ["cat10",69000,"dish_1765468791_5442.jpeg","Go’shtli (L)","Мясная (L)","Meat (L)"],
+            ["cat10",81000,"dish_1765468902_7840.jpeg","Go’shtli (XL)","Мясная (XL)","Meat (XL)"],
+            ["cat10",47000,"dish_1765473210_8402.jpeg","Jyulen (M)","Жульен (M)","Julienne (M)"],
+            ["cat10",61000,"dish_1765473335_9147.jpeg","Jyulen (L)","Жульен (L)","Julienne (L)"],
+            ["cat10",73000,"dish_1765473399_7359.jpeg","Jyulen (XL)","Жульен (XL)","Julienne (XL)"],
+            ["cat10",53000,"dish_1765473536_1320.jpeg","Go‘shtli pide","Мясное пиде","Meat pide"],
+            ["cat10",70000,"dish_1765473710_4729.jpeg","Xanskiy pitsa (L)","Ханская пицца (L)","Khan pizza (L)"],
+            ["cat10",83000,"dish_1765473823_8643.jpeg","Xoncha pitsa (XL)","Хонча пицца (XL)","Khoncha pizza (XL)"],
+            ["cat10",53000,"dish_1765474547_6664.jpeg","Donar pitsa (M)","Донар пицца (M)","Doner pizza (M)"],
+            ["cat10",64000,"dish_1765474637_6279.jpeg","Donar pitsa (L)","Донар пицца (L)","Doner pizza (L)"],
+            ["cat10",78000,"dish_1765474712_9100.jpeg","Donar pitsa (XL)","Донар пицца (XL)","Doner pizza (XL)"],
+            ["cat10",47000,"dish_1765474990_3270.jpeg","Adjara","Аджарская","Adjarian"],
+            ["cat10",65000,"dish_1765475613_8621.jpeg","4 mavsum (L)","4 сезона (L)","4 Seasons (L)"],
+            ["cat10",73000,"dish_1765475590_5687.jpeg","4 mavsum (XL)","4 сезона (XL)","4 Seasons (XL)"],
+            ["cat10",50000,"dish_1765398624_3313.jpeg","Kombi (M)","Комби (M)","Combi (M)"],
+            ["cat12",40000,"dish_1765557451_2475.jpeg","Bananli vafli","Банановые вафли","Banana waffles"],
+            ["cat12",70000,"dish_1765557585_5345.jpeg","Qulupnayli vafli","Клубничные вафли","Strawberry waffles"],
+            ["cat12",70000,"dish_1765394594_3991.jpeg","Shokoladli miks","Шоколадный микс","Chocolate mix"],
+            ["cat12",55000,"dish_1765557647_7334.jpeg","Muzqaymoq va mevali","С мороженым и фруктами","With ice cream and fruits"],
+            ["cat12",70000,"dish_1765395017_6191.jpg","Mevali miks","Фруктовый микс","Fruit mix"],
+            ["cat12",55000,"dish_1765557689_3240.jpeg","Mevali","Фруктовые","Fruit"],
+            ["cat17",27000,"dish_1765395461_5154.jpeg","Malina va bananli","Малина и банан","Raspberry & Banana"],
+            ["cat17",21000,"dish_1765395536_5376.jpeg","Mikado","Микадо","Mikado"],
+            ["cat17",23000,"dish_1765395616_2172.jpeg","Smetannik","Сметанник","Smetannik"],
+            ["cat17",24000,"dish_1765395699_2403.jpeg","Napoleon","Наполеон","Napoleon"],
+            ["cat17",19000,"dish_1765395793_1734.jpeg","Medovik","Медовик","Medovik"],
+            ["cat17",19000,"dish_1765395889_8782.jpeg","Praga","Прага","Prague"],
+            ["cat17",23000,"dish_1765395984_8742.jpeg","Snickers","Сникерс","Snickers"],
+            ["cat17",28000,"dish_1765396146_3818.jpeg","Kiyevskiy","Киевский","Kievskiy"],
+            ["cat17",26000,"dish_1765396334_7702.jpeg","Rafaello","Рафаэлло","Raffaello"],
+            ["cat17",25000,"dish_1765396425_5801.jpeg","Shifon","Шифон","Chiffon"],
+            ["cat17",24000,"dish_1765396531_5469.jpeg","Korolevskiy","Королевский","Royal"],
+            ["cat17",29000,"dish_1765396577_8028.jpeg","Malibu","Малибу","Malibu"],
+            ["cat18",15000,"dish_1765396954_2787.jpeg","Mevali muzqaymoq","Фруктовое мороженое","Fruit ice cream"],
+            ["cat18",22000,"dish_1765397020_4176.jpeg","Assorti muzqaymoq","Ассорти мороженое","Assorted ice cream"],
+            ["cat18",5000,"dish_1765397152_5900.jpeg","Sutli muzqaymoq","Молочное мороженое","Milk ice cream"],
+            ["cat18",14000,"dish_1765397318_1209.jpeg","Arahis","С арахисом","With peanuts"],
+            ["cat18",12000,"dish_1765397371_5867.jpeg","Oreo","Орео","Oreo"],
+            ["cat18",15000,"dish_1765397459_9590.jpeg","Nutella","Нутелла","Nutella"]
+        ];
+
+        // Форматирование массива объектов
+        const dishes = raw_dishes.map((d, i) => ({
+            id: 'd' + i, c: d[0], p: d[1], i: d[2], t: { uz: d[3], ru: d[4], en: d[5] }
+        }));
+
+        let currentLang = localStorage.getItem('lang') || 'uz';
+        let cart = JSON.parse(localStorage.getItem('cart_yuma')) || {};
+        let activeCategory = 'all';
+
+        function updateUI() {
+            document.getElementById('languageSelect').value = currentLang;
+            document.querySelectorAll('.loc').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if(uiLocales[currentLang][key]) el.innerText = uiLocales[currentLang][key];
+            });
+            document.querySelectorAll('.loc-placeholder').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if(uiLocales[currentLang][key]) el.placeholder = uiLocales[currentLang][key];
+            });
+            renderTabs();
+            renderMenu();
+            updateCartFloatingButton();
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('categoryTabsContainer');
+            container.innerHTML = `<button class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm shrink-0 ${activeCategory==='all'?'active':''}" id="tab-all">${uiLocales[currentLang].all_dishes}</button>`;
+            
+            const uniqueCats = [...new Set(dishes.map(d => d.c))];
+            
+            uniqueCats.forEach(c => {
+                container.innerHTML += `<button class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm shrink-0 ${activeCategory===c?'active':''}" data-id="${c}">${cats_map[c][currentLang] || c}</button>`;
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    activeCategory = e.target.id === 'tab-all' ? 'all' : e.target.getAttribute('data-id');
+                    updateUI();
+                });
+            });
+        }
+
+        function renderMenu() {
+            const container = document.getElementById('menuContainer');
+            container.innerHTML = '';
+            
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = dishes.filter(d => (activeCategory === 'all' || d.c === activeCategory) && d.t[currentLang].toLowerCase().includes(q));
+            
+            filtered.forEach(d => {
+                const qty = cart[d.id] || 0;
+                let btnHtml = '';
+                
+                if (qty > 0) {
+                    btnHtml = `
+                        <div class="qty-picker w-full">
+                            <button onclick="window.changeQty('${d.id}', -1)"><i class="fa-solid fa-minus"></i></button>
+                            <span class="text-lg">${qty}</span>
+                            <button onclick="window.changeQty('${d.id}', 1)"><i class="fa-solid fa-plus"></i></button>
+                        </div>`;
+                } else {
+                    btnHtml = `
+                        <button onclick="window.changeQty('${d.id}', 1)" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10 font-bold py-3 rounded-xl transition shadow-md group-hover:bg-gradient-to-r group-hover:from-orange-500 group-hover:to-red-500 group-hover:border-transparent group-hover:shadow-orange-500/30">
+                            <i class="fa-solid fa-plus mr-1"></i> <span class="loc" data-key="add_to_cart">${uiLocales[currentLang].add_to_cart}</span>
+                        </button>`;
+                }
+
+                container.innerHTML += `
+                    <div class="glass-card menu-card p-5 flex flex-col justify-between group" onmousemove="window.trackMouse(event, this)">
+                        <div class="img-wrapper mb-5 shadow-inner">
+                            <img src="https://yumafergana.uz/admin/upload/${d.i}" class="w-full h-48 object-cover" alt="" loading="lazy">
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-zinc-100 mb-2 leading-tight">${d.t[currentLang]}</h3>
+                            <div class="text-orange-500 font-black text-2xl mb-5 drop-shadow-sm">${d.p.toLocaleString('ru-RU')} <span class="text-sm text-zinc-400 font-semibold">${uiLocales[currentLang].currency}</span></div>
+                        </div>
+                        <div>${btnHtml}</div>
+                    </div>`;
+            });
+        }
+
+        window.trackMouse = (e, el) => {
+            const rect = el.getBoundingClientRect();
+            el.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+            el.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+        };
+
+        window.changeQty = (id, delta) => {
+            const item = dishes.find(d => d.id === id);
+            if(!item) return;
+            if(!cart[id]) cart[id] = 0;
+            cart[id] += delta;
+            if(cart[id] <= 0) delete cart[id];
+            localStorage.setItem('cart_yuma', JSON.stringify(cart));
+            updateCartFloatingButton();
+            renderMenu();
+            if(document.getElementById('cartModal').style.display === 'flex') renderCartModal();
+        };
+
+        function updateCartFloatingButton() {
+            let count = 0, total = 0;
+            Object.keys(cart).forEach(id => {
+                const item = dishes.find(d => d.id === id);
+                if(item) { count += cart[id]; total += item.p * cart[id]; }
+            });
+            document.getElementById('cartCount').innerText = count;
+            document.getElementById('cartTotal').innerText = total.toLocaleString('ru-RU');
+            document.getElementById('floatingCart').style.display = count > 0 ? 'flex' : 'none';
+        }
+
+        function renderCartModal() {
+            const container = document.getElementById('cartItemsContainer');
+            container.innerHTML = '';
+            let total = 0;
+
+            Object.keys(cart).forEach(id => {
+                const item = dishes.find(d => d.id === id);
+                if(item) {
+                    const cost = item.p * cart[id];
+                    total += cost;
+                    container.innerHTML += `
+                        <div class="flex justify-between items-center bg-black/40 p-3.5 rounded-xl border border-white/5 shadow-inner">
+                            <div>
+                                <h4 class="font-bold text-zinc-100 text-base mb-1">${item.t[currentLang]}</h4>
+                                <span class="text-sm text-orange-400 font-bold">${item.p.toLocaleString('ru-RU')} <span class="text-zinc-500 text-xs">x ${cart[id]}</span></span>
+                            </div>
+                            <div class="qty-picker scale-90 shadow-md">
+                                <button onclick="window.changeQty('${id}', -1)"><i class="fa-solid fa-minus"></i></button>
+                                <button onclick="window.changeQty('${id}', 1)"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>`;
+                }
+            });
+
+            const isDelivery = document.getElementById('deliveryType').value === 'delivery';
+            if(isDelivery && total > 0) total += 10000;
+            document.getElementById('cartFinalTotal').innerText = total.toLocaleString('ru-RU');
+        }
+
+        document.getElementById('deliveryType').addEventListener('change', (e) => {
+            const addr = document.getElementById('clientAddress');
+            if(e.target.value === 'delivery') {
+                addr.classList.remove('hidden');
+                addr.setAttribute('required', 'true');
+            } else {
+                addr.classList.add('hidden');
+                addr.removeAttribute('required');
+            }
+            renderCartModal();
+        });
+
+        document.getElementById('floatingCart').addEventListener('click', () => {
+            document.getElementById('cartModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('cartModal').style.opacity = '1', 10);
+            renderCartModal();
+            if(localStorage.getItem('client_name')) document.getElementById('clientName').value = localStorage.getItem('client_name');
+            if(localStorage.getItem('client_phone')) document.getElementById('clientPhone').value = localStorage.getItem('client_phone');
+            if(localStorage.getItem('client_address')) document.getElementById('clientAddress').value = localStorage.getItem('client_address');
+        });
+        
+        document.getElementById('closeCartBtn').addEventListener('click', () => {
+            document.getElementById('cartModal').style.display = 'none';
+        });
+        
+        document.getElementById('openOrdersBtn').addEventListener('click', () => {
+            document.getElementById('ordersModal').style.display = 'flex';
+            listenToOrders();
+        });
+        document.getElementById('closeOrdersBtn').addEventListener('click', () => {
+            document.getElementById('ordersModal').style.display = 'none';
+        });
+
+        document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const lastOrderTime = localStorage.getItem('last_order_time');
+            if(lastOrderTime && (Date.now() - lastOrderTime < 5 * 60 * 1000)) {
+                alert(uiLocales[currentLang].wait_5m);
+                return;
+            }
+
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+            const delType = document.getElementById('deliveryType').value;
+            const address = delType === 'delivery' ? document.getElementById('clientAddress').value : '';
+
+            localStorage.setItem('client_name', name);
+            localStorage.setItem('client_phone', phone);
+            if(address) localStorage.setItem('client_address', address);
+
+            let items = [];
+            let total = 0;
+            Object.keys(cart).forEach(id => {
+                const dish = dishes.find(d => d.id === id);
+                if(dish) {
+                    items.push({ id: dish.id, name: dish.t[currentLang], qty: cart[id], price: dish.p });
+                    total += dish.p * cart[id];
+                }
+            });
+            if(delType === 'delivery') total += 10000;
+
+            const newOrder = {
+                id: 'YM-' + Math.floor(1000 + Math.random() * 9000),
+                timestamp: Date.now(),
+                dateStr: new Date().toLocaleString('ru-RU'),
+                clientName: name,
+                clientPhone: phone,
+                deliveryType: delType,
+                address: address || 'Самовывоз',
+                items: items,
+                totalSum: total,
+                status: 'pending'
+            };
+
+            try {
+                const ordersRef = ref(db, 'orders');
+                const newOrderRef = push(ordersRef);
+                await set(newOrderRef, newOrder);
+                
+                localStorage.setItem('last_order_time', Date.now());
+                cart = {};
+                localStorage.setItem('cart_yuma', JSON.stringify(cart));
+                updateCartFloatingButton();
+                document.getElementById('cartModal').style.display = 'none';
+                alert(uiLocales[currentLang].success);
+                renderMenu();
+            } catch(err) {
+                alert(uiLocales[currentLang].error);
+            }
+        });
+
+        function listenToOrders() {
+            const phone = localStorage.getItem('client_phone');
+            const container = document.getElementById('ordersContainer');
+            if(!phone) { container.innerHTML = `<div class="text-zinc-500 font-medium text-center py-10 bg-black/30 rounded-xl border border-white/5">${uiLocales[currentLang].empty_orders}</div>`; return; }
+
+            onValue(ref(db, 'orders'), (snapshot) => {
+                container.innerHTML = '';
+                let hasOrders = false;
+                
+                let userOrders = [];
+                snapshot.forEach(child => {
+                    const o = child.val();
+                    if(o.clientPhone === phone) userOrders.push(o);
+                });
+                
+                userOrders.sort((a,b) => b.timestamp - a.timestamp).forEach(order => {
+                    hasOrders = true;
+                    const statusText = uiLocales[currentLang]['status_' + order.status] || order.status;
+                    const itemsHtml = order.items.map(i => `${i.name} (<span class="text-orange-400">x${i.qty}</span>)`).join(', ');
+
+                    container.innerHTML += `
+                        <div class="bg-black/40 border border-white/10 rounded-xl p-5 space-y-3 shadow-lg relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-1.5 h-full ${order.status === 'pending' ? 'bg-orange-500' : (order.status === 'completed' ? 'bg-zinc-500' : 'bg-sky-500')}"></div>
+                            <div class="flex justify-between items-start pl-2">
+                                <div>
+                                    <span class="font-black text-white text-lg">${order.id}</span>
+                                    <div class="text-xs text-zinc-500 mt-1 font-semibold"><i class="fa-regular fa-calendar mr-1"></i> ${order.dateStr}</div>
+                                </div>
+                                <span class="badge status-${order.status} shadow-md">${statusText}</span>
+                            </div>
+                            <div class="text-sm text-zinc-300 font-medium pl-2 bg-white/5 p-2 rounded-lg leading-relaxed">${itemsHtml}</div>
+                            <div class="text-right text-lg font-black text-orange-400 pt-2 border-t border-white/5">${order.totalSum.toLocaleString('ru-RU')} ${uiLocales[currentLang].currency}</div>
+                        </div>`;
+                });
+                if(!hasOrders) container.innerHTML = `<div class="text-zinc-500 font-medium text-center py-10 bg-black/30 rounded-xl border border-white/5">${uiLocales[currentLang].empty_orders}</div>`;
+            });
+        }
+
+        document.getElementById('languageSelect').addEventListener('change', (e) => {
+            currentLang = e.target.value;
+            localStorage.setItem('lang', currentLang);
+            updateUI();
+        });
+
+        document.getElementById('searchInput').addEventListener('input', () => renderMenu());
+
+        updateUI();
+    </script>
+</body>
+</html>
