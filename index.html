@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Yuma - Menyu & Zakaz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        body { font-family: 'Space Grotesk', system-ui, sans-serif; background-color: #050505; transition: background-color 0.5s ease; }
+        body, .glass-card, button, div, span, p, h1, h2, a, i, input, select, textarea { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 400ms; }
+
+        body.light-theme { background-color: #f8fafc; color: #1e293b; }
+        body.light-theme .glass-card { background: rgba(255, 255, 255, 0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.05), inset 0 0 0 1px rgba(107, 114, 128, 0.4); } 
+        body.light-theme .bg-grid { background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px); }
+        body.light-theme .text-zinc-100, body.light-theme .text-zinc-200, body.light-theme .text-zinc-300, body.light-theme .restaurant-name { color: #0f172a !important; }
+        body.light-theme .text-zinc-400, body.light-theme .text-zinc-500 { color: #475569 !important; }
+        body.light-theme input, body.light-theme select, body.light-theme textarea { background-color: #ffffff !important; border-color: #94a3b8 !important; color: #0f172a !important; } 
+        body.light-theme .top-btn { background: #e2e8f0; color: #0f172a; border-color: #94a3b8; }
+        body.light-theme .top-btn:hover { background: #cbd5e1; }
+
+        .glass-card { background: rgba(30, 30, 35, 0.7); border-radius: 1.25rem; position: relative; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(107, 114, 128, 0.6); } 
+        .glass-card::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 3.8px; background: radial-gradient(280px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), #ef4444 0%, #f97316 40%, #eab308 70%, transparent 100%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity 0.4s ease; pointer-events: none; z-index: 10; }
+        .glass-card:hover::after { opacity: 1; }
+
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 40%, transparent 90%); }
+        .qty-picker { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #f97316, #ef4444); border-radius: 0.75rem; overflow: hidden; font-weight: bold; color: white; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3); }
+        .qty-picker button { padding: 10px 18px; background: transparent; border: none; cursor: pointer; transition: background 0.2s; font-size: 1.1rem; }
+        .qty-picker button:hover { background: rgba(0,0,0,0.2); }
+        .qty-picker button:active { background: rgba(0,0,0,0.3); transform: scale(0.95); }
+
+        .floating-cart { position: fixed; bottom: 24px; right: 24px; background: linear-gradient(135deg, #f97316, #ef4444); color: white; border-radius: 50px; padding: 14px 28px; box-shadow: 0 10px 30px -5px rgba(239, 68, 68, 0.6); display: none; cursor: pointer; z-index: 999; font-weight: bold; transform-origin: center; }
+        .floating-cart:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 35px -5px rgba(239, 68, 68, 0.7); }
+        .floating-cart:active { transform: translateY(0) scale(0.98); }
+
+        .category-tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { background: #27272a; color: #d4d4d8; border: 1px solid #6b7280; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .tab-btn:hover { background: #3f3f46; color: white; transform: translateY(-2px); }
+        .tab-btn.active { background: linear-gradient(135deg, #f97316, #ef4444); color: white; border-color: transparent; box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4); transform: translateY(-2px); }
+        
+        body.light-theme .tab-btn { background: #f1f5f9; color: #475569; border-color: #94a3b8; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        body.light-theme .tab-btn:hover { background: #e2e8f0; color: #0f172a; }
+        body.light-theme .tab-btn.active { background: linear-gradient(135deg, #f97316, #ef4444); color: white; border-color: transparent; }
+
+        .badge { padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: bold; color: #000; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-pending { background-color: #f97316; color: #fff; }
+        .status-accepted { background-color: #a3e635; }
+        .status-in_progress { background-color: #38bdf8; color: #fff; }
+        .status-ready_delivery { background-color: #22c55e; color: #fff; }
+        .status-completed { background-color: #94a3b8; }
+        .status-rejected { background-color: #ef4444; color: #fff; }
+        
+        .top-btn { background: #3f3f46; color: white; border: 1px solid #6b7280; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .top-btn:hover { background: #52525b; border-color: #9ca3af; transform: translateY(-2px); }
+        .top-btn:active { transform: translateY(0) scale(0.95); }
+
+        .social-btn { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .social-btn:hover { transform: translateY(-5px) scale(1.2) !important; }
+        
+        .img-wrapper { overflow: hidden; border-radius: 0.75rem; }
+        .img-wrapper img { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .group:hover .img-wrapper img { transform: scale(1.1); }
+        .menu-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(249, 115, 22, 0.3); z-index: 20; }
+
+        .logo-glow { background: rgba(0,0,0,0.4); box-shadow: 0 0 20px rgba(255,255,255,0.15); border: 1px solid #6b7280; }
+        body.light-theme .logo-glow { background: rgba(255,255,255,0.7); box-shadow: 0 0 20px rgba(0,0,0,0.1); border: 1px solid #94a3b8; }
+        .logo-glow img { filter: drop-shadow(0px 3px 6px rgba(249, 115, 22, 0.6)) brightness(1.1); transition: filter 0.5s; }
+        body.light-theme .logo-glow img { filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2)) brightness(0.1) !important; }
+
+        .theme-switch { background: rgba(0,0,0,0.3); border-color: #6b7280; border-width: 1px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+        body.light-theme .theme-switch { background: rgba(0,0,0,0.05); border-color: #94a3b8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .theme-slider { transform: translateX(0); background: #52525b; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
+        body.light-theme .theme-slider { transform: translateX(28px); background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        .toast-enter { transform: translateY(-20px); opacity: 0; }
+        .toast-active { transform: translateY(0); opacity: 1; }
+        .toast-leave { transform: translateX(100%); opacity: 0; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #6b7280; border-radius: 9999px; }
+    </style>
+    <script>
+        // Блокирующий синхронный скрипт для мгновенной установки темы до рендеринга страницы
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light' || (!savedTheme && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+                document.documentElement.classList.add('preload-light');
+            }
+        })();
+    </script>
+</head>
+<body class="text-zinc-300 min-h-screen relative z-0 pb-10">
+    <script>
+        // Синхронно переносим класс на body, убирая временный класс с html
+        if (document.documentElement.classList.contains('preload-light')) {
+            document.body.classList.add('light-theme');
+            document.documentElement.classList.remove('preload-light');
+        }
+    </script>
+
+    <div class="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 transition-opacity" id="langModal">
+        <div class="glass-card bg-zinc-900 border border-gray-500/60 border-l-4 border-l-orange-500 w-full max-w-sm p-7 relative shadow-2xl">
+            <i class="fa-solid fa-xmark absolute top-6 right-6 text-zinc-400 hover:text-white text-2xl cursor-pointer transition hover:rotate-90" id="closeLangBtn"></i>
+            <h2 class="text-2xl font-black text-white mb-6 flex items-center gap-3 border-b border-gray-500/60 pb-4">
+                <i class="fa-solid fa-language text-orange-500"></i> <span>Language / Тил</span>
+            </h2>
+            <div class="flex flex-col gap-3">
+                <button class="w-full text-left bg-black/40 hover:bg-zinc-800 border border-gray-500/60 hover:border-orange-500/50 p-4 rounded-xl font-bold text-white flex items-center justify-between transition group" onclick="window.selectLanguage('uz')">
+                    <span>O'zbekcha (UZ)</span> <i class="fa-solid fa-chevron-right text-zinc-600 group-hover:text-orange-500 transition"></i>
+                </button>
+                <button class="w-full text-left bg-black/40 hover:bg-zinc-800 border border-gray-500/60 hover:border-orange-500/50 p-4 rounded-xl font-bold text-white flex items-center justify-between transition group" onclick="window.selectLanguage('ru')">
+                    <span>Русский (RU)</span> <i class="fa-solid fa-chevron-right text-zinc-600 group-hover:text-orange-500 transition"></i>
+                </button>
+                <button class="w-full text-left bg-black/40 hover:bg-zinc-800 border border-gray-500/60 hover:border-orange-500/50 p-4 rounded-xl font-bold text-white flex items-center justify-between transition group" onclick="window.selectLanguage('en')">
+                    <span>English (EN)</span> <i class="fa-solid fa-chevron-right text-zinc-600 group-hover:text-orange-500 transition"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 z-[-1] pointer-events-none">
+        <div class="absolute inset-0 bg-grid"></div>
+    </div>
+
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+
+    <div class="max-w-5xl mx-auto px-4 pt-6">
+        <header class="glass-card p-4 flex justify-between items-center mb-6 border-b border-gray-500/60 flex-wrap gap-4">
+            <div class="logo-glow p-2 rounded-2xl transition-all duration-500">
+                <img src="https://cdn.jsdelivr.net/gh/yumafergana/yuma-images@main/yuma-logo.png" alt="Yuma Logo">
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div id="themeToggleBtn" class="theme-switch flex items-center rounded-full p-1 cursor-pointer w-[60px] h-[32px] relative transition-all overflow-hidden shrink-0">
+                    <div class="theme-slider absolute left-[2px] w-[26px] h-[26px] rounded-full transition-transform duration-300"></div>
+                    <div class="w-1/2 flex justify-center z-10 text-blue-300 text-xs drop-shadow-md pointer-events-none"><i class="fa-solid fa-moon"></i></div>
+                    <div class="w-1/2 flex justify-center z-10 text-yellow-400 text-xs drop-shadow-md pointer-events-none"><i class="fa-solid fa-sun"></i></div>
+                </div>
+                <button class="top-btn px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition" id="openOrdersBtn">
+                    <i class="fa-solid fa-clock-rotate-left text-orange-400 text-sm sm:text-base"></i> <span class="loc" data-key="my_orders">Buyurtmalarim</span>
+                </button>
+                
+                <button id="openLangModalBtn" class="top-btn px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition">
+                    <i class="fa-solid fa-earth-americas text-orange-400"></i> <span id="currentLangLabel">UZ</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="glass-card p-7 mb-8 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-5">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight restaurant-name drop-shadow-md">Yuma Restaurant</h1>
+                <div class="text-zinc-300 font-medium text-sm mt-3 flex items-center gap-2 justify-center sm:justify-start">
+                    <i class="fa-solid fa-location-dot text-red-500 text-lg"></i>
+                    <span class="loc" data-key="address">Farg'ona shahar, Burxoniddin Marg'iloniy ko'chasi, 60</span>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <a href="https://www.instagram.com/yumauzbekistan" target="_blank" class="social-btn w-12 h-12 rounded-xl top-btn flex items-center justify-center text-xl"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://t.me/yuma_motalka" target="_blank" class="social-btn w-12 h-12 rounded-xl top-btn flex items-center justify-center text-xl"><i class="fa-brands fa-telegram"></i></a>
+            </div>
+        </div>
+
+        <div class="category-tabs flex overflow-x-auto gap-3 mb-8 pb-3 px-1" id="categoryTabsContainer"></div>
+        <div class="mb-8 relative group">
+            <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-orange-500 transition"></i>
+            <input type="text" id="searchInput" class="w-full bg-black/40 border border-gray-500/60 rounded-2xl pl-12 pr-4 py-4 text-zinc-100 placeholder-zinc-500 outline-none focus:border-orange-500/80 focus:bg-black/60 shadow-inner text-lg transition-all loc-placeholder" data-key="search_placeholder" placeholder="Qidiruv...">
+        </div>
+
+        <div id="menuLoading" class="text-center py-20">
+            <i class="fa-solid fa-spinner fa-spin text-4xl text-orange-500 mb-3"></i>
+            <p class="text-zinc-500 font-medium loc" data-key="loading">Yuklanmoqda / Загрузка / Loading...</p>
+        </div>
+
+        <main class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 hidden" id="menuContainer"></main>
+    </div>
+
+    <div class="floating-cart flex items-center gap-4" id="floatingCart">
+        <i class="fa-solid fa-basket-shopping text-2xl drop-shadow-md"></i>
+        <div class="flex flex-col">
+            <span class="text-xs opacity-90 font-medium"><span id="cartCount">0</span> <span class="loc" data-key="items">taom</span></span>
+            <span class="text-lg"><span id="cartTotal">0</span> <span class="loc text-sm font-medium" data-key="currency">so'm</span></span>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 transition-opacity" id="cartModal">
+        <div class="glass-card bg-zinc-900 border border-gray-500/60 w-full max-w-md p-7 max-h-[90vh] overflow-y-auto relative shadow-2xl custom-scrollbar">
+            <i class="fa-solid fa-xmark absolute top-6 right-6 text-zinc-400 hover:text-white text-2xl cursor-pointer transition hover:rotate-90" id="closeCartBtn"></i>
+            <h2 class="text-2xl font-black text-white mb-6 flex items-center gap-3 border-b border-gray-500/60 pb-4"><i class="fa-solid fa-cart-shopping text-orange-500"></i> <span class="loc" data-key="cart_title">Korzina</span></h2>
+            
+            <div id="cartItemsContainer" class="space-y-3 max-h-[35vh] overflow-y-auto pr-2 custom-scrollbar"></div>
+            
+            <div class="border-t border-gray-500/60 mt-5 pt-5 flex justify-between items-end text-xl font-black text-white mb-6 bg-black/20 p-4 rounded-xl">
+                <span class="loc text-zinc-300 text-lg" data-key="total">Jami:</span>
+                <div class="text-orange-400"><span id="cartFinalTotal">0</span> <span class="loc text-sm font-medium text-zinc-400" data-key="currency">so'm</span></div>
+            </div>
+
+            <form id="checkoutForm" class="space-y-4">
+                <input type="text" id="clientName" class="w-full bg-black/50 border border-gray-500/60 rounded-xl px-4 py-3.5 text-zinc-100 outline-none focus:border-orange-500 transition loc-placeholder" data-key="ph_name" placeholder="Ismingiz" required>
+                <input type="tel" id="clientPhone" class="w-full bg-black/50 border border-gray-500/60 rounded-xl px-4 py-3.5 text-zinc-100 outline-none focus:border-orange-500 transition" placeholder="+998" maxlength="19" required>
+                <select id="deliveryType" class="w-full bg-black/50 border border-gray-500/60 rounded-xl px-4 py-3.5 text-zinc-100 outline-none focus:border-orange-500 transition font-bold cursor-pointer">
+                    <option value="pickup" class="loc" data-key="pickup">Olib ketish</option>
+                    <option value="delivery" class="loc" data-key="delivery">Yetkazib berish (+10 000 so'm)</option>
+                </select>
+                <input type="text" id="clientAddress" class="w-full bg-black/50 border border-gray-500/60 rounded-xl px-4 py-3.5 text-zinc-100 outline-none focus:border-orange-500 transition loc-placeholder hidden" data-key="ph_address" placeholder="Manzil">
+                
+                <div class="relative">
+                    <textarea id="clientComment" class="w-full bg-black/50 border border-gray-500/60 rounded-xl px-4 pt-3.5 pb-8 text-zinc-100 outline-none focus:border-orange-500 transition loc-placeholder custom-scrollbar resize-none" data-key="ph_comment" placeholder="Buyurtma uchun sharh (ixtiyoriy)" maxlength="100" rows="2"></textarea>
+                    <div id="commentCounter" class="absolute bottom-2.5 right-4 text-xs text-zinc-500 font-medium select-none">0/100</div>
+                </div>
+                
+                <button type="submit" id="submitOrderBtn" class="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold text-lg py-4 rounded-xl transition-all shadow-[0_10px_20px_-10px_rgba(249,115,22,0.8)] hover:-translate-y-1 active:scale-95 loc mt-2" data-key="checkout_btn">Buyurtma berish</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 transition-opacity" id="ordersModal">
+        <div class="glass-card bg-zinc-900 border border-gray-500/60 w-full max-w-xl p-7 max-h-[90vh] overflow-y-auto relative shadow-2xl custom-scrollbar">
+            <i class="fa-solid fa-xmark absolute top-6 right-6 text-zinc-400 hover:text-white text-2xl cursor-pointer transition hover:rotate-90" id="closeOrdersBtn"></i>
+            <h2 class="text-2xl font-black text-white mb-6 flex items-center gap-3 border-b border-gray-500/60 pb-4"><i class="fa-solid fa-clock-rotate-left text-orange-500"></i> <span class="loc" data-key="my_orders">Mening buyurtmalarim</span></h2>
+            <div id="ordersContainer" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        const escapeHTML = (str) => {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>"']/g, match => {
+                const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+                return escapeMap[match];
+            });
+        };
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBR3rLYp-cpq9nYsDKwwdbTziLr1w0qxn8",
+            authDomain: "jwiidid.firebaseapp.com",
+            databaseURL: "https://jwiidid-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "jwiidid",
+            storageBucket: "jwiidid.firebasestorage.app",
+            messagingSenderId: "163956366428",
+            appId: "1:163956366428:web:d209e93e59eeada258da99"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const toastAudio = new Audio('https://cdn.jsdelivr.net/gh/yumafergana/yuma-images@main/toast.wav');
+
+        window.showToast = (message, type = 'success') => {
+            toastAudio.currentTime = 0;
+            toastAudio.play().catch(e => console.log('Audio autoplay blocked:', e));
+
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let icon = '';
+            let borderClass = '';
+            if(type === 'success') { icon = '<i class="fa-solid fa-circle-check text-green-500 text-xl"></i>'; borderClass = 'border-l-4 border-green-500'; }
+            else if(type === 'error') { icon = '<i class="fa-solid fa-circle-xmark text-red-500 text-xl"></i>'; borderClass = 'border-l-4 border-red-500'; }
+            else if(type === 'info') { icon = '<i class="fa-solid fa-circle-info text-sky-400 text-xl"></i>'; borderClass = 'border-l-4 border-sky-400'; }
+            else { icon = '<i class="fa-solid fa-circle-exclamation text-orange-500 text-xl"></i>'; borderClass = 'border-l-4 border-orange-500'; }
+
+            toast.className = `glass-card p-4 flex items-center gap-3 text-zinc-100 shadow-2xl pointer-events-auto toast-enter ${borderClass}`;
+            toast.innerHTML = `${icon} <span class="font-medium text-sm sm:text-base">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-active');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('toast-active');
+                toast.classList.add('toast-leave');
+                setTimeout(() => toast.remove(), 400);
+            }, 4500);
+        };
+
+        const phoneInput = document.getElementById('clientPhone');
+        phoneInput.addEventListener('input', function (e) {
+            let val = e.target.value.replace(/\D/g, '');
+            if (!val.startsWith('998') && val.length > 0) val = '998' + val;
+            if (val.length === 0) { e.target.value = ''; return; }
+            
+            let res = '+' + val.substring(0, 3);
+            if (val.length > 3) res += ' (' + val.substring(3, 5);
+            if (val.length > 5) res += ') ' + val.substring(5, 8);
+            if (val.length > 8) res += '-' + val.substring(8, 10);
+            if (val.length > 10) res += '-' + val.substring(10, 12);
+            e.target.value = res;
+        });
+        phoneInput.addEventListener('focus', function(e) {
+            if(!e.target.value) e.target.value = '+998 ';
+        });
+
+        // Счетчик символов для комментария
+        const clientComment = document.getElementById('clientComment');
+        const commentCounter = document.getElementById('commentCounter');
+        clientComment.addEventListener('input', function () {
+            commentCounter.innerText = `${this.value.length}/100`;
+        });
+
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        themeToggleBtn.addEventListener('click', () => {
+            const isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        });
+
+        const uiLocales = {
+            uz: {
+                loading: "Yuklanmoqda...",
+                my_orders: "Buyurtmalarim",
+                address: "Farg'ona shahar, Burxoniddin Marg'iloniy ko'chasi, 60",
+                search_placeholder: "Qidiruv...",
+                items: "taom",
+                currency: "so'm",
+                cart_title: "Korzina",
+                total: "Jami:",
+                ph_name: "Ismingiz",
+                ph_address: "Manzil",
+                ph_comment: "Buyurtma uchun sharh (ixtiyoriy)",
+                pickup: "Olib ketish",
+                delivery: "Yetkazib berish (+10 000)",
+                checkout_btn: "Buyurtma berish",
+                add_to_cart: "Savatchaga qo'shish",
+                all_dishes: "Barcha taomlar",
+                status_pending: "Kutilmoqda",
+                status_accepted: "Qabul qilindi",
+                status_in_progress: "Tayyorlanmoqda",
+                status_ready_delivery: "Yo'lda / Tayyor",
+                status_completed: "Yakunlandi",
+                status_rejected: "Rad etildi",
+                wait_5m: "Iltimos, keyingi buyurtma uchun biroz kuting.",
+                success: "Buyurtma muvaffaqiyatli yuborildi!",
+                error: "Xatolik yuz berdi.",
+                empty_orders: "Sizda hali buyurtmalar yo'q.",
+                toast_accepted: (id) => `✅ Buyurtma ${id} qabul qilindi`,
+                toast_in_progress: (id) => `👨‍🍳 Buyurtma ${id} tayyorlanmoqda`,
+                toast_ready_delivery: (id) => `🚗 Buyurtma ${id} yo'lda / tayyor`,
+                toast_completed: (id) => `🎉 Buyurtma ${id} yakunlandi`,
+                toast_rejected: (id) => `❌ Buyurtma ${id} rad etildi`,
+            },
+            ru: {
+                loading: "Загрузка...",
+                my_orders: "Мои заказы",
+                address: "г. Фергана, ул. Б. Маргилани, 60",
+                search_placeholder: "Поиск...",
+                items: "шт.",
+                currency: "сум",
+                cart_title: "Корзина",
+                total: "Итого:",
+                ph_name: "Ваше имя",
+                ph_address: "Адрес доставки",
+                ph_comment: "Комментарий к заказу (необязательно)",
+                pickup: "Самовывоз",
+                delivery: "Доставка (+10 000)",
+                checkout_btn: "Оформить заказ",
+                add_to_cart: "В корзину",
+                all_dishes: "Все блюда",
+                status_pending: "Ожидает",
+                status_accepted: "Принят",
+                status_in_progress: "Готовится",
+                status_ready_delivery: "В пути / Готов",
+                status_completed: "Завершен",
+                status_rejected: "Отменен",
+                wait_5m: "Подождите перед следующим заказом.",
+                success: "Заказ успешно отправлен!",
+                error: "Ошибка при отправке.",
+                empty_orders: "У вас пока нет заказов.",
+                toast_accepted: (id) => `✅ Заказ ${id} принят`,
+                toast_in_progress: (id) => `👨‍🍳 Заказ ${id} готовится`,
+                toast_ready_delivery: (id) => `🚗 Заказ ${id} в пути / готов`,
+                toast_completed: (id) => `🎉 Заказ ${id} завершён`,
+                toast_rejected: (id) => `❌ Заказ ${id} отменён`,
+            },
+            en: {
+                loading: "Loading...",
+                my_orders: "My Orders",
+                address: "Fergana city, B. Margilaniy str., 60",
+                search_placeholder: "Search...",
+                items: "items",
+                currency: "uzs",
+                cart_title: "Cart",
+                total: "Total:",
+                ph_name: "Your Name",
+                ph_address: "Delivery Address",
+                ph_comment: "Order comment (optional)",
+                pickup: "Pickup",
+                delivery: "Delivery (+10 000)",
+                checkout_btn: "Checkout",
+                add_to_cart: "Add to cart",
+                all_dishes: "All Dishes",
+                status_pending: "Pending",
+                status_accepted: "Accepted",
+                status_in_progress: "Preparing",
+                status_ready_delivery: "On the way / Ready",
+                status_completed: "Completed",
+                status_rejected: "Rejected",
+                wait_5m: "Please wait before ordering again.",
+                success: "Order successfully placed!",
+                error: "An error occurred.",
+                empty_orders: "No orders found.",
+                toast_accepted: (id) => `✅ Order ${id} accepted`,
+                toast_in_progress: (id) => `👨‍🍳 Order ${id} is being prepared`,
+                toast_ready_delivery: (id) => `🚗 Order ${id} is on the way / ready`,
+                toast_completed: (id) => `🎉 Order ${id} completed`,
+                toast_rejected: (id) => `❌ Order ${id} was rejected`,
+            }
+        };
+
+        const cats_map = {
+            "cat5": { uz: "Kofe va Choy", ru: "Кофе и Чай", en: "Coffee & Tea" },
+            "cat14": { uz: "Choy", ru: "Чай", en: "Tea" },
+            "cat13": { uz: "Kofe", ru: "Кофе", en: "Coffee" },
+            "cat15": { uz: "Kokteyl", ru: "Коктейли", en: "Cocktails" },
+            "cat16": { uz: "Birinchi taom", ru: "Первые блюда", en: "First Courses" },
+            "cat7": { uz: "Sho'rvalar", ru: "Супы", en: "Soups" },
+            "cat11": { uz: "Fast-food", ru: "Фаст-фуд", en: "Fast Food" },
+            "cat9": { uz: "Qo'shimcha taom", ru: "Гарниры", en: "Side Dishes" },
+            "cat8": { uz: "Kombo", ru: "Комбо", en: "Combo" },
+            "cat6": { uz: "Go'shtli taomlar", ru: "Мясные блюда", en: "Meat Dishes" },
+            "cat10": { uz: "Pitsalar", ru: "Пиццы", en: "Pizzas" },
+            "cat12": { uz: "Vaflilar", ru: "Вафли", en: "Waffles" },
+            "cat17": { uz: "Desert", ru: "Десерты", en: "Desserts" },
+            "cat18": { uz: "Muzqaymoq", ru: "Мороженое", en: "Ice Cream" }
+        };
+
+        let dishes = [];
+        let currentLang = localStorage.getItem('lang') || 'uz';
+        let cart = JSON.parse(localStorage.getItem('cart_yuma')) || {};
+        let activeCategory = 'all';
+
+        let trackedOrderStatuses = {};
+        let orderStatusInitialized = {};
+
+        const menuContainer = document.getElementById('menuContainer');
+        const menuLoading = document.getElementById('menuLoading');
+        const floatingCart = document.getElementById('floatingCart');
+        const cartCount = document.getElementById('cartCount');
+        const cartTotal = document.getElementById('cartTotal');
+        const cartModal = document.getElementById('cartModal');
+        const cartItemsContainer = document.getElementById('cartItemsContainer');
+        const cartFinalTotal = document.getElementById('cartFinalTotal');
+        const searchInput = document.getElementById('searchInput');
+        const submitOrderBtn = document.getElementById('submitOrderBtn');
+
+        const langModal = document.getElementById('langModal');
+        const openLangModalBtn = document.getElementById('openLangModalBtn');
+        const closeLangBtn = document.getElementById('closeLangBtn');
+        const currentLangLabel = document.getElementById('currentLangLabel');
+
+        openLangModalBtn.addEventListener('click', () => { langModal.style.display = 'flex'; });
+        closeLangBtn.addEventListener('click', () => { langModal.style.display = 'none'; });
+        window.selectLanguage = (lang) => {
+            currentLang = lang;
+            localStorage.setItem('lang', currentLang);
+            langModal.style.display = 'none';
+            updateUI();
+        };
+
+        function loadDishesFromFirebase() {
+            const menuRef = ref(db, 'menu');
+            onValue(menuRef, (snapshot) => {
+                const data = snapshot.val();
+                dishes = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        const d = data[key];
+                        if(d) {
+                            dishes.push({
+                                id: key,
+                                c: d.category || d.c || '',
+                                p: Number(d.price || d.p || 0),
+                                i: d.image || d.i || '',
+                                t: {
+                                    uz: d.name_uz || (d.t && d.t.uz) || '',
+                                    ru: d.name_ru || (d.t && d.t.ru) || '',
+                                    en: d.name_en || (d.t && d.t.en) || ''
+                                }
+                            });
+                        }
+                    });
+                }
+                menuLoading.classList.add('hidden');
+                menuContainer.classList.remove('hidden');
+                updateUI();
+            }, (error) => {
+                console.error("Firebase load error:", error);
+                showToast("Firebase: " + error.message, "error");
+            });
+        }
+
+        function updateUI() {
+            currentLangLabel.innerText = currentLang.toUpperCase();
+            document.querySelectorAll('.loc').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if(uiLocales[currentLang][key]) el.innerText = uiLocales[currentLang][key];
+            });
+            document.querySelectorAll('.loc-placeholder').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if(uiLocales[currentLang][key]) el.placeholder = uiLocales[currentLang][key];
+            });
+            renderTabs();
+            renderMenu();
+            updateCartFloatingButton();
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('categoryTabsContainer');
+            let tabsHtml = `<button class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm shrink-0 ${activeCategory==='all'?'active':''}" id="tab-all">${uiLocales[currentLang].all_dishes}</button>`;
+            const uniqueCats = [...new Set(dishes.map(d => d.c))].filter(c => c);
+            uniqueCats.forEach(c => {
+                const catName = cats_map[c] ? (cats_map[c][currentLang] || c) : c;
+                tabsHtml += `<button class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm shrink-0 ${activeCategory===c?'active':''}" data-id="${c}">${catName}</button>`;
+            });
+            container.innerHTML = tabsHtml;
+            container.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    activeCategory = e.target.id === 'tab-all' ? 'all' : e.target.getAttribute('data-id');
+                    renderTabs();
+                    renderMenu();
+                });
+            });
+        }
+
+        function getBtnHtml(d, qty) {
+            if (qty > 0) return `<div class="qty-picker w-full"><button onclick="window.changeQty('${d.id}', -1)"><i class="fa-solid fa-minus"></i></button><span class="text-lg">${qty}</span><button onclick="window.changeQty('${d.id}', 1)"><i class="fa-solid fa-plus"></i></button></div>`;
+            return `<button onclick="window.changeQty('${d.id}', 1)" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white border border-gray-500/60 font-bold py-3 rounded-xl transition shadow-md group-hover:bg-gradient-to-r group-hover:from-orange-500 group-hover:to-red-500 group-hover:border-transparent group-hover:shadow-orange-500/30"><i class="fa-solid fa-plus mr-1"></i> <span>${uiLocales[currentLang].add_to_cart}</span></button>`;
+        }
+
+        function renderMenu() {
+            const q = searchInput.value.toLowerCase();
+            const filtered = dishes.filter(d => (activeCategory === 'all' || d.c === activeCategory) && d.t[currentLang] && d.t[currentLang].toLowerCase().includes(q));
+            let menuHtml = '';
+            filtered.forEach(d => {
+                const qty = cart[d.id] || 0;
+                menuHtml += `<div class="glass-card menu-card p-5 flex flex-col justify-between group" data-dish-id="${d.id}"><div class="img-wrapper mb-5 shadow-inner"><img src="https://cdn.jsdelivr.net/gh/yumafergana/yuma-images@main/${d.i}" class="w-full h-48 object-cover" alt="" loading="lazy"></div><div><h3 class="text-xl font-bold text-zinc-100 mb-2 leading-tight">${escapeHTML(d.t[currentLang])}</h3><div class="text-orange-500 font-black text-2xl mb-5 drop-shadow-sm">${d.p.toLocaleString('ru-RU')} <span class="text-sm text-zinc-400 font-semibold">${uiLocales[currentLang].currency}</span></div></div><div class="action-btn-container">${getBtnHtml(d, qty)}</div></div>`;
+            });
+            menuContainer.innerHTML = menuHtml;
+        }
+
+        menuContainer.addEventListener('mousemove', (e) => {
+            const card = e.target.closest('.menu-card');
+            if (!card) return;
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+            card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+        });
+
+        window.changeQty = (id, delta) => {
+            const item = dishes.find(d => d.id === id);
+            if(!item) return;
+            if(!cart[id]) cart[id] = 0;
+            cart[id] += delta;
+            const newQty = cart[id];
+            if(newQty <= 0) delete cart[id];
+            localStorage.setItem('cart_yuma', JSON.stringify(cart));
+            const cardElement = menuContainer.querySelector(`[data-dish-id="${id}"]`);
+            if (cardElement) {
+                const container = cardElement.querySelector('.action-btn-container');
+                if (container) container.innerHTML = getBtnHtml(item, newQty);
+            }
+            updateCartFloatingButton();
+            if(cartModal.style.display === 'flex') renderCartModal();
+        };
+
+        function updateCartFloatingButton() {
+            let count = 0, total = 0;
+            Object.keys(cart).forEach(id => {
+                const item = dishes.find(d => d.id === id);
+                if(item) { count += cart[id]; total += item.p * cart[id]; }
+            });
+            cartCount.innerText = count;
+            cartTotal.innerText = total.toLocaleString('ru-RU');
+            floatingCart.style.display = count > 0 ? 'flex' : 'none';
+        }
+
+        function renderCartModal() {
+            let containerHtml = '';
+            let total = 0;
+            Object.keys(cart).forEach(id => {
+                const item = dishes.find(d => d.id === id);
+                if(item) {
+                    const cost = item.p * cart[id];
+                    total += cost;
+                    containerHtml += `<div class="flex justify-between items-center bg-black/40 p-3.5 rounded-xl border border-gray-500/60 shadow-inner"><div><h4 class="font-bold text-zinc-100 text-base mb-1">${escapeHTML(item.t[currentLang])}</h4><span class="text-sm text-orange-400 font-bold">${item.p.toLocaleString('ru-RU')} <span class="text-zinc-500 text-xs">x ${cart[id]}</span></span></div><div class="qty-picker scale-90 shadow-md"><button onclick="window.changeQty('${escapeHTML(id)}', -1)"><i class="fa-solid fa-minus"></i></button><button onclick="window.changeQty('${escapeHTML(id)}', 1)"><i class="fa-solid fa-plus"></i></button></div></div>`;
+                }
+            });
+            cartItemsContainer.innerHTML = containerHtml;
+            const isDelivery = document.getElementById('deliveryType').value === 'delivery';
+            if(isDelivery && total > 0) total += 10000;
+            cartFinalTotal.innerText = total.toLocaleString('ru-RU');
+        }
+
+        document.getElementById('deliveryType').addEventListener('change', (e) => {
+            const addr = document.getElementById('clientAddress');
+            if(e.target.value === 'delivery') { addr.classList.remove('hidden'); addr.setAttribute('required', 'true'); }
+            else { addr.classList.add('hidden'); addr.removeAttribute('required'); }
+            renderCartModal();
+        });
+
+        floatingCart.addEventListener('click', () => {
+            cartModal.style.display = 'flex';
+            renderCartModal();
+            if(localStorage.getItem('client_name')) document.getElementById('clientName').value = localStorage.getItem('client_name');
+            if(localStorage.getItem('client_phone')) document.getElementById('clientPhone').value = localStorage.getItem('client_phone');
+            if(localStorage.getItem('client_address')) document.getElementById('clientAddress').value = localStorage.getItem('client_address');
+            
+            // Сбрасываем/обновляем счетчик при открытии модального окна
+            const commentVal = document.getElementById('clientComment').value;
+            document.getElementById('commentCounter').innerText = `${commentVal.length}/100`;
+        });
+
+        document.getElementById('closeCartBtn').addEventListener('click', () => { cartModal.style.display = 'none'; });
+        document.getElementById('openOrdersBtn').addEventListener('click', () => { document.getElementById('ordersModal').style.display = 'flex'; listenToOrders(); });
+        document.getElementById('closeOrdersBtn').addEventListener('click', () => { document.getElementById('ordersModal').style.display = 'none'; });
+
+        document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const lastOrderTime = localStorage.getItem('last_order_time');
+            if(lastOrderTime && (Date.now() - lastOrderTime < 60000)) {
+                showToast(uiLocales[currentLang].wait_5m, 'warning');
+                return;
+            }
+
+            submitOrderBtn.disabled = true;
+            submitOrderBtn.innerText = "...";
+
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+            const delType = document.getElementById('deliveryType').value;
+            const address = delType === 'delivery' ? document.getElementById('clientAddress').value : '';
+            const comment = document.getElementById('clientComment').value; 
+
+            localStorage.setItem('client_name', name);
+            localStorage.setItem('client_phone', phone);
+            if(address) localStorage.setItem('client_address', address);
+
+            let items = [];
+            Object.keys(cart).forEach(id => {
+                const dish = dishes.find(d => d.id === id);
+                if(dish) items.push({ id: dish.id, qty: cart[id] });
+            });
+
+            const randomNumber = Math.floor(Math.random() * 1000000);
+            const formattedNumber = String(randomNumber).padStart(6, '0');
+
+            const newOrder = {
+                id: 'YM-' + formattedNumber,
+                timestamp: Date.now(),
+                dateStr: new Date().toLocaleString('ru-RU'),
+                clientName: name,
+                clientPhone: phone,
+                deliveryType: delType,
+                address: address || 'Самовывоз',
+                comment: comment, 
+                items: items,
+                status: 'pending'
+            };
+
+            try {
+                const ordersRef = ref(db, 'orders');
+                const newOrderRef = push(ordersRef);
+                const orderKey = newOrderRef.key;
+
+                await set(newOrderRef, newOrder);
+
+                let myOrders = JSON.parse(localStorage.getItem('my_orders_keys') || "[]");
+                myOrders.push(orderKey);
+                localStorage.setItem('my_orders_keys', JSON.stringify(myOrders));
+
+                localStorage.setItem('last_order_time', Date.now());
+                cart = {};
+                localStorage.setItem('cart_yuma', JSON.stringify(cart));
+                document.getElementById('clientComment').value = ''; 
+                document.getElementById('commentCounter').innerText = '0/100';
+                updateCartFloatingButton();
+                cartModal.style.display = 'none';
+
+                showToast(uiLocales[currentLang].success, 'success');
+                renderMenu();
+
+                listenOrderStatus(orderKey);
+
+            } catch(err) {
+                showToast(uiLocales[currentLang].error, 'error');
+            } finally {
+                submitOrderBtn.disabled = false;
+                submitOrderBtn.innerText = uiLocales[currentLang].checkout_btn;
+            }
+        });
+
+        const statusToastConfig = {
+            accepted:       { key: 'toast_accepted',       type: 'success' },
+            in_progress:    { key: 'toast_in_progress',    type: 'info'    },
+            ready_delivery: { key: 'toast_ready_delivery', type: 'success' },
+            completed:      { key: 'toast_completed',      type: 'success' },
+            rejected:       { key: 'toast_rejected',       type: 'error'   },
+        };
+
+        function listenOrderStatus(orderKey) {
+            const orderRef = ref(db, 'orders/' + orderKey);
+            onValue(orderRef, (snapshot) => {
+                if (!snapshot.exists()) return;
+                const order = snapshot.val();
+                const newStatus = order.status;
+                const orderId = order.id || orderKey;
+
+                if (!orderStatusInitialized[orderKey]) {
+                    orderStatusInitialized[orderKey] = true;
+                    trackedOrderStatuses[orderKey] = newStatus;
+                    return;
+                }
+
+                const prevStatus = trackedOrderStatuses[orderKey];
+                if (newStatus !== prevStatus) {
+                    trackedOrderStatuses[orderKey] = newStatus;
+                    const config = statusToastConfig[newStatus];
+                    if (config) {
+                        const msgFn = uiLocales[currentLang][config.key];
+                        if (typeof msgFn === 'function') {
+                            showToast(msgFn(orderId), config.type);
+                        }
+                    }
+                    const ordersModal = document.getElementById('ordersModal');
+                    if (ordersModal.style.display === 'flex') {
+                        renderMyOrders();
+                    }
+                }
+            });
+        }
+
+        let userOrdersData = {};
+
+        function listenToOrders() {
+            const container = document.getElementById('ordersContainer');
+            const myKeys = JSON.parse(localStorage.getItem('my_orders_keys') || "[]");
+
+            if(myKeys.length === 0) {
+                container.innerHTML = `<div class="text-zinc-500 font-medium text-center py-10 bg-black/30 rounded-xl border border-gray-500/60">${uiLocales[currentLang].empty_orders}</div>`;
+                return;
+            }
+
+            myKeys.forEach(key => {
+                onValue(ref(db, 'orders/' + key), (snapshot) => {
+                    if(snapshot.exists()) {
+                        userOrdersData[key] = snapshot.val();
+                        renderMyOrders();
+                    }
+                });
+            });
+        }
+
+        function renderMyOrders() {
+            const container = document.getElementById('ordersContainer');
+            let containerHtml = '';
+
+            const sortedKeys = Object.keys(userOrdersData).sort((a,b) => userOrdersData[b].timestamp - userOrdersData[a].timestamp);
+
+            sortedKeys.forEach(key => {
+                const order = userOrdersData[key];
+                const statusText = escapeHTML(uiLocales[currentLang]['status_' + order.status] || order.status);
+
+                let calculatedTotal = order.deliveryType === 'delivery' ? 10000 : 0;
+                const itemsHtml = order.items.map(i => {
+                    const dish = dishes.find(d => d.id === i.id);
+                    if(dish) calculatedTotal += dish.p * i.qty;
+                    return `${dish ? escapeHTML(dish.t[currentLang]) : 'Taom'} (<span class="text-orange-400">x${escapeHTML(i.qty)}</span>)`;
+                }).join(', ');
+
+                const commentHtml = order.comment ? `<div class="text-sm text-zinc-400 italic mt-3 bg-black/30 p-2.5 rounded-lg border border-gray-500/40"><i class="fa-regular fa-comment-dots text-orange-400 mr-2"></i>${escapeHTML(order.comment)}</div>` : '';
+
+                containerHtml += `
+                    <div class="bg-black/40 border border-gray-500/60 rounded-xl p-5 space-y-3 shadow-lg relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1.5 h-full ${order.status === 'pending' ? 'bg-orange-500' : (order.status === 'completed' ? 'bg-zinc-500' : 'bg-sky-500')}"></div>
+                        <div class="flex justify-between items-start pl-2">
+                            <div>
+                                <span class="font-black text-white text-lg">${escapeHTML(order.id)}</span>
+                                <div class="text-xs text-zinc-500 mt-1 font-semibold"><i class="fa-regular fa-calendar mr-1"></i> ${escapeHTML(order.dateStr)}</div>
+                            </div>
+                            <span class="badge status-${escapeHTML(order.status)} shadow-md">${statusText}</span>
+                        </div>
+                        <div class="text-sm text-zinc-300 font-medium pl-2 bg-white/5 p-2 rounded-lg leading-relaxed">${itemsHtml}</div>
+                        ${commentHtml}
+                        <div class="text-right text-lg font-black text-orange-400 pt-2 border-t border-gray-500/60">${calculatedTotal.toLocaleString('ru-RU')} ${uiLocales[currentLang].currency}</div>
+                    </div>`;
+            });
+            container.innerHTML = containerHtml;
+        }
+
+        searchInput.addEventListener('input', () => renderMenu());
+
+        function initOrderStatusListeners() {
+            const myKeys = JSON.parse(localStorage.getItem('my_orders_keys') || "[]");
+            myKeys.forEach(key => listenOrderStatus(key));
+        }
+
+        loadDishesFromFirebase();
+        initOrderStatusListeners();
+    </script>
+</body>
+</html>
